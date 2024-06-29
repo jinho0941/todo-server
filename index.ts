@@ -6,11 +6,10 @@ import cors from 'cors'
 const prisma = new PrismaClient()
 const app = express()
 
-// CORS 설정
 const corsOptions = {
-  origin: 'http://localhost:3000', // 클라이언트 도메인을 여기에 추가합니다.
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // 허용할 HTTP 메소드
-  allowedHeaders: ['Content-Type'], // 허용할 HTTP 헤더
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
 }
 app.use(cors(corsOptions))
 
@@ -33,7 +32,11 @@ app.post('/todos', async (req, res) => {
 
 app.get('/todos', async (req, res) => {
   try {
-    const todos = await prisma.todo.findMany()
+    const todos = await prisma.todo.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
     res.status(200).json(todos)
   } catch (error) {
     res
@@ -75,8 +78,7 @@ app.put('/todos/:id', async (req, res) => {
   }
 })
 
-// title 업데이트
-app.put('/todos/:id/title', async (req, res) => {
+app.patch('/todos/:id/title', async (req, res) => {
   const { id } = req.params
   const { title } = req.body
   try {
@@ -94,8 +96,7 @@ app.put('/todos/:id/title', async (req, res) => {
   }
 })
 
-// description 업데이트
-app.put('/todos/:id/description', async (req, res) => {
+app.patch('/todos/:id/description', async (req, res) => {
   const { id } = req.params
   const { description } = req.body
   try {
@@ -110,6 +111,24 @@ app.put('/todos/:id/description', async (req, res) => {
     res
       .status(500)
       .json({ error: 'Todo 설명 업데이트 중 에러가 발생하였습니다.' })
+  }
+})
+
+app.patch('/todos/:id/completed', async (req, res) => {
+  const { id } = req.params
+  const { completed } = req.body
+  try {
+    const todo = await prisma.todo.update({
+      where: { id },
+      data: {
+        completed,
+      },
+    })
+    res.status(200).json(todo)
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: 'Todo 완료 상태 업데이트 중 에러가 발생하였습니다.' })
   }
 })
 
